@@ -1,17 +1,18 @@
 {
     "version": 2,
-    "rewrites": [
+    "buildCommand": "cd web-app && npm install && npm run build",
+    "outputDirectory": "dist",
+    "routes": [
         {
-            "source": "/api/(.*)",
-            "destination": "/api/index.py"
+            "src": "/api/(.*)",
+            "dest": "/api/index.py"
         },
         {
-            "source": "/((?!api/).*)",
-            "destination": "/dist/$1"
+            "handle": "filesystem"
         },
         {
-            "source": "/(.*)",
-            "destination": "/dist/index.html"
+            "src": "/(.*)",
+            "dest": "/index.html"
         }
     ]
 }
