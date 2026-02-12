@@ -81,6 +81,8 @@ const JobAgentDashboard = () => {
         setLoading(false);
       }
 
+      // Set default base URL for Axios
+      // axios.defaults.baseURL = '/api'; // This line would require importing axios
       // Update logs based on status message changes
       if (data.active && data.message !== status.message) {
         addLog(data.message, 'info');
