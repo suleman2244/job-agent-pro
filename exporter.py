@@ -1,92 +1,80 @@
-import pandas as pd
 import os
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment
 from config import OUTPUT_FILENAME
 
 def export_to_excel(jobs_list):
     """
-    Exports a list of job dictionaries to a professional, formatted Excel file.
-    Includes clickable HYPERLINKS and clean data categorization.
+    Exports a list of job dictionaries to a professional, formatted Excel file using openpyxl directly.
+    This replaces pandas to reduce the deployment size for Vercel.
     """
     if not jobs_list:
         print("No jobs to export.")
         return None
 
     try:
-        # Create DataFrame
-        df = pd.DataFrame(jobs_list)
-        
-        # Ensure correct column order
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Job Leads"
+
         columns = ['title', 'company', 'location', 'link', 'emails', 'source']
-        for col in columns:
-            if col not in df.columns:
-                df[col] = ""
-        
-        df = df[columns]
+        ws.append([col.capitalize() for col in columns])
 
-        # Clean strings for Excel
-        def clean_val(val):
-            if isinstance(val, list):
-                return "\n".join(val) # Use newline for cleaner email listing
-            if not isinstance(val, str):
-                return val
-            return "".join(c for c in val if c.isprintable() or c in "\n\r\t")
+        # --- PROFESSIONAL STYLING ---
+        header_font = Font(bold=True, color="FFFFFF", size=12)
+        header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
+        center_align = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        left_wrap = Alignment(horizontal='left', vertical='top', wrap_text=True)
+        link_font = Font(color="0563C1", underline="single")
 
-        for col in df.columns:
-            df[col] = df[col].apply(clean_val)
+        # Style header row
+        for cell in ws[1]:
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = center_align
 
-        # Save using openpyxl with advanced formatting
-        with pd.ExcelWriter(OUTPUT_FILENAME, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False, sheet_name='Job Leads')
-            
-            workbook = writer.book
-            worksheet = writer.sheets['Job Leads']
-            
-            from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
-            
-            # --- PROFESSIONAL STYLING ---
-            header_font = Font(bold=True, color="FFFFFF", size=12)
-            header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
-            center_align = Alignment(horizontal='center', vertical='center', wrap_text=True)
-            left_wrap = Alignment(horizontal='left', vertical='top', wrap_text=True)
-            
-            # Style header row
-            for cell in worksheet[1]:
-                cell.font = header_font
-                cell.fill = header_fill
-                cell.alignment = center_align
+        # Add data
+        for job in jobs_list:
+            row_data = []
+            for col in columns:
+                val = job.get(col, "")
+                if isinstance(val, list):
+                    val = "\n".join(val)
+                # Clean strings for Excel
+                if isinstance(val, str):
+                    val = "".join(c for c in val if c.isprintable() or c in "\n\r\t")
+                row_data.append(val)
+            ws.append(row_data)
+
+        # Style data rows and add hyperlinks
+        for row_idx, row in enumerate(ws.iter_rows(min_row=2, max_row=ws.max_row), start=2):
+            for cell in row:
+                cell.alignment = left_wrap
                 
-            # --- CLICKABLE LINKS & ROW STYLING ---
-            link_font = Font(color="0563C1", underline="single")
-            
-            for row_idx, row in enumerate(worksheet.iter_rows(min_row=2, max_row=worksheet.max_row), start=2):
-                # Make link clickable using Formula
-                link_cell = worksheet.cell(row=row_idx, column=4) # Column 'link'
-                raw_url = link_cell.value
-                if raw_url and raw_url.startswith("http"):
-                    # Use HYPERLINK formula for actual clickability
-                    link_cell.value = f'=HYPERLINK("{raw_url}", "OPEN JOB POSTING")'
-                    link_cell.font = link_font
-                
-                # Align other cells
-                for cell in row:
-                    if cell.column != 4: # Don't overwrite the link alignment if we want it specific
-                        cell.alignment = left_wrap
+                # Check for link column (Column 4 corresponds to index 3 in 0-based, but 4 in 1-based)
+                if cell.column == 4:
+                    raw_url = cell.value
+                    if raw_url and str(raw_url).startswith("http"):
+                        cell.value = f'=HYPERLINK("{raw_url}", "OPEN JOB POSTING")'
+                        cell.font = link_font
 
-            # --- AUTO-ADJUST COLUMN WIDTHS ---
-            column_widths = {
-                'A': 40, # Title
-                'B': 25, # Company
-                'C': 20, # Location
-                'D': 25, # Link
-                'E': 35, # Emails
-                'F': 15  # Source
-            }
-            for col, width in column_widths.items():
-                worksheet.column_dimensions[col].width = width
+        # --- AUTO-ADJUST COLUMN WIDTHS ---
+        column_widths = {
+            1: 40, # Title
+            2: 25, # Company
+            3: 20, # Location
+            4: 25, # Link
+            5: 35, # Emails
+            6: 15  # Source
+        }
+        for col_idx, width in column_widths.items():
+            col_letter = ws.cell(row=1, column=col_idx).column_letter
+            ws.column_dimensions[col_letter].width = width
 
-            # Freeze panes
-            worksheet.freeze_panes = 'A2'
-            
+        # Freeze panes
+        ws.freeze_panes = 'A2'
+
+        wb.save(OUTPUT_FILENAME)
         print(f"Successfully exported {len(jobs_list)} jobs to {OUTPUT_FILENAME}")
         return os.path.abspath(OUTPUT_FILENAME)
     except Exception as e:
