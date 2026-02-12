@@ -9,6 +9,10 @@ from database import init_db, get_all_jobs, get_stats
 
 app = FastAPI()
 
+@app.get("/api/health")
+async def health_check():
+    return {"status": "ok", "environment": "vercel" if os.environ.get("VERCEL") else "local"}
+
 # SaaS Setup: Initialize Database
 init_db()
 
