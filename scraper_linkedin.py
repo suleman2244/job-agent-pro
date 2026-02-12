@@ -34,6 +34,8 @@ async def scrape_linkedin(search_term="Frontend", location="Germany", target_lan
             await page.wait_for_selector(".base-card", timeout=10000)
         except Exception as e:
             print(f"Error navigating to LinkedIn: {e}")
+            if "Timeout" in str(e):
+                print("Hint: LinkedIn might be slow or blocking requests. Try increasing REQUEST_TIMEOUT.")
             await browser.close()
             return []
 
