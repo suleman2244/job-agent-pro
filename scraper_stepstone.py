@@ -9,6 +9,11 @@ async def scrape_stepstone(search_term="Frontend", location="Germany", target_la
     Scrapes Stepstone.de for jobs posted in the past 24 hours.
     Filter for date: 'age=1'.
     """
+    import os
+    if os.environ.get("VERCEL"):
+        print("Scraping Stepstone is not supported in Vercel environment.")
+        return []
+
     results = []
     base_url = STEPSTONE_URL.format(keyword=search_term, location=location)
     

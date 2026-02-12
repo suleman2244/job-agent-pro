@@ -67,6 +67,18 @@ async def start_search(filters: SearchFilters, background_tasks: BackgroundTasks
     if scraping_state["active"]:
         return {"error": "Search already in progress"}
     
+    if os.environ.get("VERCEL"):
+        scraping_state = {
+            "active": False,
+            "progress": 0,
+            "message": "Scraping not supported on Vercel Serverless. Run locally for full functionality.",
+            "job_count": 0,
+            "ready_to_download": False,
+            "current_role": "",
+            "filters": filters.dict()
+        }
+        return {"message": "Scraping not supported on Vercel", "unsupported": True}
+
     scraping_state = {
         "active": True,
         "progress": 0,

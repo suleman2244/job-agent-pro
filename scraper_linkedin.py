@@ -8,6 +8,10 @@ async def scrape_linkedin(search_term="Frontend", location="Germany", target_lan
     """
     Scrapes LinkedIn with optimization.
     """
+    if os.environ.get("VERCEL"):
+        print("Scraping LinkedIn is not supported in Vercel environment.")
+        return []
+
     results = []
     base_url = LINKEDIN_URL.format(keyword=search_term, location=location)
     

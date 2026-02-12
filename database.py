@@ -2,7 +2,10 @@ import sqlite3
 import os
 from datetime import datetime
 
-DB_PATH = "jobs_agent.db"
+if os.environ.get("VERCEL"):
+    DB_PATH = "/tmp/jobs_agent.db"
+else:
+    DB_PATH = "jobs_agent.db"
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)

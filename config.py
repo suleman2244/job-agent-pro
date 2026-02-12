@@ -10,7 +10,10 @@ HEADLESS = True  # Set to False to see the browser in action
 REQUEST_TIMEOUT = 60000  # 60 seconds
 
 # Export settings
-OUTPUT_FILENAME = "jobs_report.xlsx"
+if os.environ.get("VERCEL"):
+    OUTPUT_FILENAME = "/tmp/jobs_report.xlsx"
+else:
+    OUTPUT_FILENAME = "jobs_report.xlsx"
 
 # Search URLs (Templates)
 LINKEDIN_URL = "https://www.linkedin.com/jobs/search/?f_TPR=r86400&keywords={keyword}&location={location}"
