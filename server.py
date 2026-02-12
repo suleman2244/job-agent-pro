@@ -122,22 +122,19 @@ async def get_saved_jobs(limit: int = 50):
     """Returns recent job leads from DB."""
     return get_all_jobs(limit=limit)
 
-# Serve React production build
-react_build_path = os.path.join(os.getcwd(), "web-app", "dist")
-
-if os.path.exists(react_build_path):
-    # Serve index.html for the root
-    @app.get("/")
-    async def serve_index():
-        return FileResponse(os.path.join(react_build_path, "index.html"))
-
-    # Mount the rest of the assets
-    app.mount("/", StaticFiles(directory=react_build_path), name="static")
-else:
-    print(f"Warning: React build at {react_build_path} not found.")
-    # Fallback to legacy static if it exists
-    if os.path.exists("static"):
-        app.mount("/", StaticFiles(directory="static", html=True), name="static")
+# Serve React production build only when not on Vercel
+# Vercel handles static file serving via vercel.json rewrites
+if not os.environ.get("VERCEL"):
+    react_build_path = os.path.join(os.getcwd(), "web-app", "dist")
+    if os.path.exists(react_build_path):
+        @app.get("/")
+        async def serve_index():
+            return FileResponse(os.path.join(react_build_path, "index.html"))
+        app.mount("/", StaticFiles(directory=react_build_path), name="static")
+    else:
+        print(f"Warning: React build at {react_build_path} not found.")
+        if os.path.exists("static"):
+            app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 if __name__ == "__main__":
     import uvicorn
