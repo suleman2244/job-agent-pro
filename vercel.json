@@ -6,8 +6,12 @@
             "destination": "/api/index.py"
         },
         {
+            "source": "/((?!api/).*)",
+            "destination": "/dist/$1"
+        },
+        {
             "source": "/(.*)",
-            "destination": "/public/$1"
+            "destination": "/dist/index.html"
         }
     ]
 }
